@@ -435,7 +435,7 @@ class Game {
                         }
                     }
 
-                    if (!App.game.autoDungeoneerFarmMode) {
+                    if (!DungeonRunner.dungeon.mustFarmMinions()) {
                         // On va vers le boss ou l'échelle si on les voit
                         // Sinon, on va chercher un coffre si on en voit pour dévoiler la carte
                         // Sinon, on explore le donjon
@@ -463,6 +463,10 @@ class Game {
                             DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
                         }
                     } else {
+                        // On explore le donjon tant qu'il y a des tiles non découvertes
+                        // Puis on va affronter tous les ennemis
+                        // Puis on va ouvrir les coffres
+                        // Puis on va affronter le boss ou on va à l'échelle
                         if (invisibleTiles.length > 0) {
                             const electedCoordinates = electOptimalCoordinatesToExplore();
 

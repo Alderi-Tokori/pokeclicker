@@ -202,6 +202,11 @@ class Dungeon {
         });
     }
 
+    public mustFarmMinions(): boolean {
+        const minions = this.normalEncounterList.filter(e => (e.hasOwnProperty('uncaught') && (!e.hide) && e.uncaught));
+        return minions.length > 0;
+    }
+
     /**
      * Gets all available Pokemon in the dungeon
      */
