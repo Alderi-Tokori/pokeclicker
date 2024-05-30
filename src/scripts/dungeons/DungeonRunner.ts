@@ -9,7 +9,7 @@ class DungeonRunner {
     public static fighting: KnockoutObservable<boolean> = ko.observable(false);
     public static map: DungeonMap;
     public static chestsOpened: KnockoutObservable<number> = ko.observable(0);
-    private static chestsOpenedPerFloor: number[];
+    public static chestsOpenedPerFloor: number[];
     public static currentTileType;
     public static encountersWon: KnockoutObservable<number> = ko.observable(0);
     public static fightingBoss: KnockoutObservable<boolean> = ko.observable(false);
