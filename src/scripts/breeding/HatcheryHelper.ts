@@ -196,7 +196,7 @@ class HatcheryHelpers {
         // Add steps and attack based on efficiency
         this.hired().forEach((helper, index) => {
             // Calculate how many steps should be applied
-            const steps = Math.max(1, Math.round(amount * (helper.stepEfficiency() / 100)));
+            const steps = Math.max(1, Math.round(amount * (Math.min(helper.stepEfficiency(), 100) / 100)));
 
             // Add steps to the egg we are managing
             let egg = this.hatchery.eggList[index]();
@@ -204,7 +204,7 @@ class HatcheryHelpers {
 
             // Check if the egg is ready to hatch
             if (egg.canHatch()) {
-                const hatched = egg.hatch(helper.attackEfficiency(), true);
+                const hatched = egg.hatch(Math.min(helper.attackEfficiency(), 100), true);
                 if (hatched) {
                     // Reset egg
                     this.hatchery.eggList[index](new Egg());
