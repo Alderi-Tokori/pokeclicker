@@ -51,7 +51,9 @@ class Game {
         public purifyChamber: PurifyChamber,
         public weatherApp: WeatherApp,
         public zMoves: ZMoves,
-        public pokemonContest: PokemonContest
+        public pokemonContest: PokemonContest,
+        public autoDungeoneerFarmMode: false,
+        public autoStartDungeon: false
     ) {
         this._gameState = ko.observable(GameConstants.GameState.loading);
     }
@@ -392,6 +394,117 @@ class Game {
                 break;
             }
             case GameConstants.GameState.dungeon: {
+                // Auto dungeoneer
+                if (!(DungeonRunner.fighting() || DungeonBattle.catching() || DungeonRunner.fightingBoss())) {
+                    let curFloor = DungeonRunner.map.playerPosition().floor;
+
+                    let enemyTiles = [];
+                    let chestTiles = [];
+                    let bossTiles = [];
+                    let ladderTiles = [];
+                    let visitedTiles = [];
+                    let invisibleTiles = [];
+                    let unaccessibleTiles = [];
+                    for (let i = 0; i < DungeonRunner.map.board()[curFloor].length; i++)
+                    {
+                        for (let j = 0; j < DungeonRunner.map.board()[curFloor][i].length; j++)
+                        {
+                            let curCoords = new Point(j, i, curFloor);
+
+                            if (DungeonRunner.map.board()[curFloor][i][j].isVisible)
+                            {
+                                let curCoordsType = DungeonRunner.map.board()[curFloor][i][j].type();
+
+                                if (curCoordsType === GameConstants.DungeonTileType.chest)
+                                {
+                                    chestTiles.push(curCoords);
+                                }
+                                else if (curCoordsType === GameConstants.DungeonTileType.boss)
+                                {
+                                    bossTiles.push(curCoords);
+                                }
+                                else if (curCoordsType === GameConstants.DungeonTileType.enemy)
+                                {
+                                    enemyTiles.push(curCoords);
+                                }
+                                else if (curCoordsType === GameConstants.DungeonTileType.ladder)
+                                {
+                                    ladderTiles.push(curCoords);
+                                }
+
+                                if (DungeonRunner.map.board()[curFloor][i][j].isVisited)
+                                {
+                                    visitedTiles.push(curCoords);
+                                }
+                            }
+                            else
+                            {
+                                invisibleTiles.push(curCoords);
+                            }
+
+                            if (!(DungeonRunner.map.hasAccessToTile(curCoords))) {
+                                unaccessibleTiles.push(curCoords);
+                            }
+                        }
+                    }
+
+                    if (!App.game.autoDungeoneerFarmMode) {
+                        // On va vers le boss ou l'échelle si on les voit
+                        // Sinon, on va chercher un coffre si on en voit pour dévoiler la carte
+                        // Sinon, on explore le donjon
+                        if (bossTiles.length > 0 || ladderTiles.length > 0) {
+                            if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss) {
+                                DungeonRunner.startBossFight();
+                            } else if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
+                                DungeonRunner.nextFloor();
+                            } else {
+                                let electedCoordinates = electOptimalCoordsTowardTiles([...bossTiles, ...ladderTiles], visitedTiles);
+
+                                DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                            }
+                        } else if ((chestTiles.length + DungeonRunner.chestsOpenedPerFloor[curFloor]) >= Math.floor(DungeonRunner.map.floorSizes[curFloor] / 3)) {
+                            if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.chest) {
+                                DungeonRunner.openChest();
+                            } else {
+                                let electedCoordinates = electOptimalCoordsTowardTiles(chestTiles, visitedTiles);
+
+                                DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                            }
+                        } else {
+                            let electedCoordinates = electOptimalCoordinatesToExplore();
+
+                            DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                        }
+                    } else {
+                        if (invisibleTiles.length > 0) {
+                            let electedCoordinates = electOptimalCoordinatesToExplore();
+
+                            DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                        } else if (enemyTiles.length > 0) {
+                            let electedCoordinates = electOptimalCoordsTowardTiles(enemyTiles, visitedTiles);
+
+                            DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                        } else if (chestTiles.length > 0) {
+                            if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.chest) {
+                                DungeonRunner.openChest();
+                            } else {
+                                let electedCoordinates = electOptimalCoordsTowardTiles(chestTiles, visitedTiles);
+
+                                DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                            }
+                        } else {
+                            if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss) {
+                                DungeonRunner.startBossFight();
+                            } else if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
+                                DungeonRunner.nextFloor();
+                            } else {
+                                let electedCoordinates = electOptimalCoordsTowardTiles([...bossTiles, ...ladderTiles], visitedTiles);
+
+                                DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                            }
+                        }
+                    }
+                }
                 DungeonBattle.counter += GameConstants.TICK_TIME;
                 if (DungeonBattle.counter >= GameConstants.BATTLE_TICK) {
                     DungeonBattle.tick();
@@ -549,4 +662,188 @@ class Game {
     set gameState(value) {
         this._gameState(value);
     }
+}
+
+function calculateDistance (a, b) {
+    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+}
+
+function getNbUnaccessibleTilesAround(p)
+{
+    let curFloor = DungeonRunner.map.playerPosition().floor;
+    let mapSize = DungeonRunner.map.floorSizes[curFloor];
+
+    let coordsTranslations = [
+        [-1, 0],
+        [0, -1],
+        [1, 0],
+        [0, 1]
+    ];
+
+    let nbUnaccessibleTiles = 0;
+
+    for (let i = 0; i < coordsTranslations.length; ++i)
+    {
+        let curCoords = new Point(p.x + coordsTranslations[i][0], p.y + coordsTranslations[i][1], curFloor);
+
+        if (
+            curCoords.x >= 0 && curCoords.x < mapSize && curCoords.y >= 0 && curCoords.y < mapSize &&
+            !(DungeonRunner.map.hasAccessToTile(curCoords))
+        ) {
+            ++nbUnaccessibleTiles;
+        }
+    }
+
+    return nbUnaccessibleTiles;
+}
+
+function getNbUnaccessibleTilesAt2Distance(p)
+{
+    let curFloor = DungeonRunner.map.playerPosition().floor;
+    let mapSize = DungeonRunner.map.floorSizes[curFloor];
+
+    let coordsTranslations = [
+        [-2, 0],
+        [-1, 1],
+        [0, 2],
+        [1, 1],
+        [2, 0],
+        [1, -1],
+        [0, -2],
+        [-1, -1]
+    ];
+
+    let nbUnaccessibleTiles = 0;
+
+    for (let i = 0; i < coordsTranslations.length; ++i)
+    {
+        let curCoords = new Point(p.x + coordsTranslations[i][0], p.y + coordsTranslations[i][1], curFloor);
+
+        if (
+            curCoords.x >= 0 && curCoords.x < mapSize && curCoords.y >= 0 && curCoords.y < mapSize &&
+            !(DungeonRunner.map.hasAccessToTile(curCoords))
+        ) {
+            ++nbUnaccessibleTiles;
+        }
+    }
+
+    return nbUnaccessibleTiles;
+}
+
+function electOptimalCoordinatesToExplore()
+{
+    let curFloor = DungeonRunner.map.playerPosition().floor;
+    let accessibleTiles = [];
+
+    for (let i = 0; i < DungeonRunner.map.board()[curFloor].length; i++)
+    {
+        for (let j = 0; j < DungeonRunner.map.board()[curFloor][i].length; j++)
+        {
+            let curCoords = new Point(j, i, curFloor);
+
+            if (DungeonRunner.map.hasAccessToTile(curCoords) && !(DungeonRunner.map.board()[curFloor][i][j].isVisited))
+            {
+                accessibleTiles.push(curCoords);
+            }
+        }
+    }
+
+    accessibleTiles.sort(function(a, b) {
+        // The most important criteria is the number of tiles which will be revealed by visiting a tile
+        if (getNbUnaccessibleTilesAround(a) < getNbUnaccessibleTilesAround(b)) {
+            return -1;
+        }
+
+        if (getNbUnaccessibleTilesAround(a) > getNbUnaccessibleTilesAround(b)) {
+            return 1;
+        }
+
+        // Secondly, we prioritize the tiles who have the most potential to give access to tiles with high scores on the first criteria
+        // This will result in spacing out correctly the "roads" made by the exploration and giving less priority to borders and corners
+        if (getNbUnaccessibleTilesAt2Distance(a) < getNbUnaccessibleTilesAt2Distance(b)) {
+            return -1;
+        }
+
+        if (getNbUnaccessibleTilesAt2Distance(a) > getNbUnaccessibleTilesAt2Distance(b)) {
+            return 1;
+        }
+
+        // The other criterias are coordinates-based, in order to explore the dungeon in a bottom-to-top fashion
+        if (a.y < b.y) {
+            return -1;
+        }
+
+        if (a.y > b.y) {
+            return 1;
+        }
+
+        // Lastly, we compare the x coordinates to explore the left side first
+        if (a.x > b.x) {
+            return -1;
+        }
+
+        if (a.x < b.x) {
+            return 1;
+        }
+
+        return 0;
+    });
+
+    // We take the best candidate and move there
+    let electedCoordinates = accessibleTiles[accessibleTiles.length - 1];
+
+    return electedCoordinates;
+}
+
+function electOptimalCoordsTowardTiles(destTiles, visitedTiles)
+{
+    let curFloor = DungeonRunner.map.playerPosition().floor;
+
+    // Part one: looking for the nearest tile and the nearest "starting point"
+    let nearestDestTile = null;
+    let startingPoint = null;
+    let distance = 999;
+
+    searchNearest: for (let i = 0; i < destTiles.length; ++i)
+    {
+        let curDestTile = destTiles[i];
+
+        for (let j = 0; j < visitedTiles.length; ++j)
+        {
+            let curStartingPoint = visitedTiles[j];
+            let curDist = calculateDistance(curDestTile, curStartingPoint);
+
+            if (curDist < distance)
+            {
+                distance = curDist;
+                nearestDestTile = curDestTile;
+                startingPoint = curStartingPoint;
+
+                if (distance <= 1) // We found a really close tile, no need to continue and look for a closer one because that's impossible
+                {
+                    break searchNearest;
+                }
+            }
+        }
+    }
+
+    // Part two: selecting which tile to move to in order to get closer to the chest tile
+    if (nearestDestTile.x > startingPoint.x)
+    {
+        return new Point(startingPoint.x + 1, startingPoint.y, curFloor);
+    }
+    else if (nearestDestTile.x < startingPoint.x)
+    {
+        return new Point(startingPoint.x - 1, startingPoint.y, curFloor);
+    }
+    else if (nearestDestTile.y > startingPoint.y)
+    {
+        return new Point(startingPoint.x, startingPoint.y + 1, curFloor);
+    }
+    else if (nearestDestTile.y < startingPoint.y)
+    {
+        return new Point(startingPoint.x, startingPoint.y - 1, curFloor);
+    }
+
+    return startingPoint;
 }
