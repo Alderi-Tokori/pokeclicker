@@ -78,22 +78,29 @@ export default class DamageCalculator {
     public static getOneTypeDetail(pokemon: { name: PokemonNameType, displayName: string }): TypeDetail {
         const ignoreRegionMultiplier = DamageCalculator.region() == Region.none;
         const dataPokemon = getPokemonByName(pokemon.name);
+
+        let attack = App.game.party.calculateOnePokemonAttack(pokemon, PokemonType.None, PokemonType.None, DamageCalculator.region(), ignoreRegionMultiplier,
+            DamageCalculator.includeBreeding(), DamageCalculator.baseAttackOnly(), DamageCalculator.weather(), DamageCalculator.ignoreLevel());
+        const type1Multiplier = TypeHelper.getAttackModifier(dataPokemon.type1, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2());
+        const type2Multiplier = dataPokemon.type2 !== PokemonType.None
+            ? TypeHelper.getAttackModifier(dataPokemon.type2, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2())
+            : -1;
+        let damage = 0;
+
+        if (type1Multiplier > type2Multiplier && dataPokemon.type1 === DamageCalculator.detailType()) {
+            damage = attack * type1Multiplier;
+        } else if (type1Multiplier < type2Multiplier && dataPokemon.type2 === DamageCalculator.detailType()) {
+            damage = attack * type2Multiplier;
+        } else if (type1Multiplier === type2Multiplier && (dataPokemon.type1 === DamageCalculator.detailType() || dataPokemon.type2 === DamageCalculator.detailType())) {
+            damage = (attack / 2) * type1Multiplier;
+        }
+
         return {
             id: dataPokemon.id,
             name: dataPokemon.name,
             type1: dataPokemon.type1,
             type2: dataPokemon.type2,
-            damage: App.game.party.calculateOnePokemonAttack(
-                pokemon,
-                DamageCalculator.type1(),
-                DamageCalculator.type2(),
-                DamageCalculator.region(),
-                ignoreRegionMultiplier,
-                DamageCalculator.includeBreeding(),
-                DamageCalculator.baseAttackOnly(),
-                DamageCalculator.weather(),
-                DamageCalculator.ignoreLevel(),
-            ),
+            damage: damage,
             displayName: pokemon.displayName,
         };
     }
@@ -101,7 +108,13 @@ export default class DamageCalculator {
     public static getTypeDetail(): TypeDetail[] {
         return App.game.party.caughtPokemon.filter(pokemon => {
             const dataPokemon = getPokemonByName(pokemon.name);
-            return dataPokemon.type1 == DamageCalculator.detailType() || dataPokemon.type2 == DamageCalculator.detailType();
+            const type1Multiplier = TypeHelper.getAttackModifier(dataPokemon.type1, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2());
+            const type2Multiplier = dataPokemon.type2 !== PokemonType.None
+                ? TypeHelper.getAttackModifier(dataPokemon.type2, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2())
+                : -1;
+
+            return (dataPokemon.type1 == DamageCalculator.detailType() && type1Multiplier >= type2Multiplier && type1Multiplier > 0)
+                || (dataPokemon.type2 == DamageCalculator.detailType() && type2Multiplier >= type1Multiplier && type2Multiplier > 0);
         }).reduce((details, pokemon) => {
             details.push(DamageCalculator.getOneTypeDetail(pokemon));
             return details;
