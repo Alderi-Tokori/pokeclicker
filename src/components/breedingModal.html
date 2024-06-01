@@ -89,6 +89,23 @@ aria-labelledby="breedingModalLabel" aria-hidden="true">
                                             </div>
 
                                             <div class="form-group col-lg-6 col-6">
+                                                <label>Defending Types</label>
+                                                <select name="breedingDefendingTypeFilter1" autocomplete="off" class="custom-select" onchange="BreedingFilters.defendingType1.value(+this.value), BreedingController.defendingType1.value(+this.value), Settings.setSettingByName(this.name, this.value)">
+                                                    <!-- ko foreach: Settings.getSetting('breedingDefendingTypeFilter1').options -->
+                                                    <option data-bind="attr: { value: $data.value, selected: Settings.getSetting('breedingDefendingTypeFilter1').value === $data.value }, text: $data.text">Type</option>
+                                                    <!-- /ko -->
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-lg-6 col-6">
+                                                <label> </label>
+                                                <select name="breedingDefendingTypeFilter2" autocomplete="off" class="custom-select" onchange="BreedingFilters.defendingType2.value(+this.value), BreedingController.defendingType2.value(+this.value), Settings.setSettingByName(this.name, this.value)">
+                                                    <!-- ko foreach: Settings.getSetting('breedingDefendingTypeFilter2').options -->
+                                                    <option data-bind="attr: { value: $data.value, selected: Settings.getSetting('breedingDefendingTypeFilter2').value === $data.value }, text: $data.text">Type</option>
+                                                    <!-- /ko -->
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group col-lg-6 col-6">
                                                 <label>Regions</label><br/>
                                                 <div class="dropdown show">
                                                     <button type="button" class="text-left custom-select col-12 btn btn-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-bind="text :

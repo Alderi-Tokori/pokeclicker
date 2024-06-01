@@ -189,7 +189,7 @@ class BreedingController {
             case 'baseAttack': return `Base Attack: ${pokemon.baseAttack.toLocaleString('en-US')}`;
             case 'eggSteps': return `Egg Steps: ${pokemon.getEggSteps().toLocaleString('en-US')}`;
             case 'timesHatched': return `Hatches: ${App.game.statistics.pokemonHatched[pokemonData.id]().toLocaleString('en-US')}`;
-            case 'breedingEfficiency': return `Efficiency: ${(pokemon.breedingEfficiency() * BreedingController.calculateRegionalMultiplier(pokemon)).toLocaleString('en-US', { maximumFractionDigits: 3 })}`;
+            case 'breedingEfficiency': return `Efficiency: ${(pokemon.breedingEfficiency() * BreedingController.calculateRegionalMultiplier(pokemon) * BreedingController.calculateTypeMultiplier(pokemon)).toLocaleString('en-US', { maximumFractionDigits: 3 })}`;
             case 'stepsPerAttack': return `Steps/Att: ${(pokemon.getEggSteps() / (pokemon.getBreedingAttackBonus() * BreedingController.calculateRegionalMultiplier(pokemon))).toLocaleString('en-US', { maximumFractionDigits: 3 })}`;
             case 'dexId': return `#${pokemon.id <= 0 ? '???' : Math.floor(pokemon.id).toString().padStart(3,'0')}`;
             case 'vitamins': return `Vitamins: ${pokemon.totalVitaminsUsed()}`;
@@ -200,6 +200,10 @@ class BreedingController {
     // Applied regional debuff
     public static regionalAttackDebuff = ko.observable(-1);
 
+    // Selected defending types
+    public static defendingType1 = ko.observable(PokemonType.None);
+    public static defendingType2 = ko.observable(PokemonType.None);
+
     public static calculateRegionalMultiplier(pokemon: PartyPokemon): number {
         // Check if regional debuff is active
         if (App.game.challenges.list.regionalAttackDebuff.active()) {
@@ -207,6 +211,15 @@ class BreedingController {
             if (BreedingController.regionalAttackDebuff() > -1 && PokemonHelper.calcNativeRegion(pokemon.name) !== BreedingController.regionalAttackDebuff()) {
                 return App.game.party.getRegionAttackMultiplier();
             }
+        }
+        return 1.0;
+    }
+
+    public static calculateTypeMultiplier(pokemon) {
+        // Check if defending type is set for sorting
+        if (BreedingController.defendingType1() !== PokemonType.None) {
+            const dataPokemon = PokemonHelper.getPokemonByName(pokemon.name);
+            return TypeHelper.getAttackModifier(dataPokemon.type1, dataPokemon.type2, BreedingController.defendingType1(), BreedingController.defendingType2());
         }
         return 1.0;
     }
@@ -238,7 +251,8 @@ class BreedingController {
         const hatcheryList = Array.from(BreedingController.hatcheryFilteredList());
         // Don't adjust attack based on region if debuff is disabled
         const region = App.game.challenges.list.regionalAttackDebuff.active() ? BreedingController.regionalAttackDebuff() : -1;
-        hatcheryList.sort(PartyController.compareBy(Settings.getSetting('hatcherySort').observableValue(), Settings.getSetting('hatcherySortDirection').observableValue(), region));
+        hatcheryList.sort(PartyController.compareBy(Settings.getSetting('hatcherySort').observableValue(), Settings.getSetting('hatcherySortDirection').observableValue(), region,
+            BreedingController.defendingType1(), BreedingController.defendingType2()));
         // If a filter or sort order just changed
         if (BreedingController.viewResetWaiting.peek()) {
             // Ready to rerender now that the list is up to date

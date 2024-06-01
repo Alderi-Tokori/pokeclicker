@@ -340,7 +340,7 @@ class PartyController {
         pokemonList.forEach((p) => p.removeCategory(category));
     }
 
-    public static compareBy(option: SortOptions, direction: boolean, region = -1): (a: PartyPokemon, b: PartyPokemon) => number {
+    public static compareBy(option: SortOptions, direction: boolean, region = -11, defendingType1 = PokemonType.None, defendingType2 = PokemonType.None): (a: PartyPokemon, b: PartyPokemon) => number {
         return function (a, b) {
             let res, dir = (direction) ? -1 : 1;
             const config = SortOptionConfigs[option];
@@ -352,6 +352,15 @@ class PartyController {
             if (region > -1 && [SortOptions.attack, SortOptions.breedingEfficiency, SortOptions.attackBonus].includes(option)) {
                 aValue *= PartyController.calculateRegionalMultiplier(a, region);
                 bValue *= PartyController.calculateRegionalMultiplier(b, region);
+            }
+
+            // Apply attack multiplier against defending type if needed
+            if (defendingType1 != PokemonType.None && [SortOptions.attack, SortOptions.breedingEfficiency].includes(option)) {
+                const dataPokemonA = PokemonHelper.getPokemonByName(a.name);
+                const dataPokemonB = PokemonHelper.getPokemonByName(b.name);
+
+                aValue *= TypeHelper.getAttackModifier(dataPokemonA.type1, dataPokemonA.type2, defendingType1, defendingType2);
+                bValue *= TypeHelper.getAttackModifier(dataPokemonB.type1, dataPokemonB.type2, defendingType1, defendingType2);
             }
 
             if (option === SortOptions.category) {

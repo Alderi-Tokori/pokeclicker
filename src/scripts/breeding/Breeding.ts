@@ -36,6 +36,8 @@ class Breeding implements Feature {
         BreedingFilters.region.value(Settings.getSetting('breedingRegionFilter').value);
         BreedingFilters.type1.value(Settings.getSetting('breedingTypeFilter1').value);
         BreedingFilters.type2.value(Settings.getSetting('breedingTypeFilter2').value);
+        BreedingFilters.defendingType1.value(Settings.getSetting('breedingDefendingTypeFilter1').value);
+        BreedingFilters.defendingType2.value(Settings.getSetting('breedingDefendingTypeFilter2').value);
         BreedingFilters.shinyStatus.value(Settings.getSetting('breedingShinyFilter').value);
         BreedingFilters.pokerus.value(Settings.getSetting('breedingPokerusFilter').value);
         BreedingFilters.uniqueTransformation.value(Settings.getSetting('breedingUniqueTransformationFilter').value);
