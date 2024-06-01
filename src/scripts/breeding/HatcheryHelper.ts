@@ -219,7 +219,7 @@ class HatcheryHelpers {
                     App.game.challenges.list.regionalAttackDebuff.active() ? BreedingController.regionalAttackDebuff() : GameConstants.Region.none,
                     BreedingController.defendingType1(),
                     BreedingController.defendingType2()
-                )
+                );
 
                 const categories = helper.categories();
                 const useHatcheryFilters = helper.useHatcheryFilters();
