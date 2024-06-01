@@ -4,6 +4,7 @@ import WeatherType from '../weather/WeatherType';
 import { getPokemonByName } from '../pokemons/PokemonHelper';
 import GameHelper from '../GameHelper';
 import type { PokemonNameType } from '../pokemons/PokemonNameType';
+import TypeHelper from './TypeHelper';
 
 export default class DamageCalculator {
     public static type1 = ko.observable(PokemonType.None).extend({ numeric: 0 });
@@ -44,12 +45,30 @@ export default class DamageCalculator {
                 continue;
             }
 
-            const attack = App.game.party.calculateOnePokemonAttack(pokemon, DamageCalculator.type1(), DamageCalculator.type2(), DamageCalculator.region(), ignoreRegionMultiplier,
+            const attack = App.game.party.calculateOnePokemonAttack(pokemon, PokemonType.None, PokemonType.None, DamageCalculator.region(), ignoreRegionMultiplier,
                 DamageCalculator.includeBreeding(), DamageCalculator.baseAttackOnly(), DamageCalculator.weather(), DamageCalculator.ignoreLevel());
 
-            typedamage[dataPokemon.type1] += attack / 2;
-            const otherType = dataPokemon.type2 !== PokemonType.None ? dataPokemon.type2 : dataPokemon.type1;
-            typedamage[otherType] += attack / 2;
+            if (DamageCalculator.type1() === PokemonType.None) {
+                // When no defender type is selected, then we evenly split the pokemon's attack between its types
+                typedamage[dataPokemon.type1] += attack / 2;
+                const otherType = dataPokemon.type2 !== PokemonType.None ? dataPokemon.type2 : dataPokemon.type1;
+                typedamage[otherType] += attack / 2;
+            } else {
+                // We calculate the base attack of the pokemon, and will affect the correct multiplier for each of its types, then we will only use the best multiplier
+                const type1Multiplier = TypeHelper.getAttackModifier(dataPokemon.type1, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2());
+                const type2Multiplier = dataPokemon.type2 !== PokemonType.None
+                    ? TypeHelper.getAttackModifier(dataPokemon.type2, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2())
+                    : -1;
+
+                if (type1Multiplier > type2Multiplier) {
+                    typedamage[dataPokemon.type1] += attack * type1Multiplier;
+                } else if (type1Multiplier < type2Multiplier) {
+                    typedamage[dataPokemon.type2] += attack * type2Multiplier;
+                } else {
+                    typedamage[dataPokemon.type1] += (attack / 2) * type1Multiplier;
+                    typedamage[dataPokemon.type2] += (attack / 2) * type2Multiplier;
+                }
+            }
         }
 
         return typedamage;
