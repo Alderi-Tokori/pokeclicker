@@ -522,7 +522,7 @@ export class Mine {
         return mineSave;
     }
 
-    public static indicateOptimalSpotToBreak(debug = false) {
+    public static indicateOptimalSpotToBreak() {
         let gridScores = new Array(Mine.grid.length).fill(0).map(() => new Array(Mine.grid[0].length).fill(0));
 
         let revealedItems = [];
@@ -534,8 +534,8 @@ export class Mine {
             }
         }
 
-        $(`#mineBody div`).removeClass('spot-to-break');
-        $(`#mineBody div`).removeClass('item-found');
+        $('#mineBody div').removeClass('spot-to-break');
+        $('#mineBody div').removeClass('item-found');
 
         let bestI = -1;
         let bestJ = -1;
@@ -571,7 +571,8 @@ export class Mine {
                 let space = item.space;
 
                 for (let rotation = 0; rotation < 4; ++rotation) {
-                    let newSpace = new Array(space[0].length).fill(0).map(() => new Array(space.length).fill(0));
+                    const spaceLength = space.length;
+                    let newSpace = new Array(space[0].length).fill(0).map(() => new Array(spaceLength).fill(0));
 
                     for (let i = 0; i < space.length; i++) {
                         for (let j = 0; j < space[0].length; j++) {
@@ -605,8 +606,6 @@ export class Mine {
                 }
             });
 
-            if (debug) console.log(gridScores);
-
             for (let i = 0; i < gridScores.length; ++i) {
                 for (let j = 0; j < gridScores[i].length; ++j) {
                     let score = gridScores[i][j];
@@ -615,8 +614,6 @@ export class Mine {
                     if (score > 0 && mineSquareLevel > 0) {
                         let scoreEnergyScaled = score / Math.ceil(mineSquareLevel / 2);
                         let distanceToCenter = Math.sqrt((i - centerI) * (i - centerI) + (j - centerJ) * (j - centerJ));
-
-                        if (debug) console.log({i, j, score, mineSquareLevel, scoreEnergyScaled, distanceToCenter});
 
                         if (scoreEnergyScaled > bestScore || (scoreEnergyScaled == bestScore && distanceToCenter < bestDistanceToCenter)) {
                             bestI = i;
@@ -629,14 +626,12 @@ export class Mine {
             }
 
             $(`div[data-i=${bestI}][data-j=${bestJ}]`).addClass('spot-to-break');
-
-            if (debug) console.log({bestI, bestJ, bestScore, bestDistanceToCenter});
         }
 
         Mine.bestI = bestI;
         Mine.bestJ = bestJ;
 
-        return {bestI, bestJ, bestScore, bestDistanceToCenter};
+        return { bestI, bestJ, bestScore, bestDistanceToCenter };
     }
 }
 
