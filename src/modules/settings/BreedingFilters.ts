@@ -54,9 +54,8 @@ const BreedingFilters: Record<string, FilterOption> = {
         ko.observable(-2).extend({ numeric: 0 }),
         'breedingDefendingTypeFilter1',
         [
-            new SettingOption('All', '-2'),
-            ...Settings.enumToSettingOptionArray(PokemonType, (t) => t !== 'None'),
             new SettingOption('None', '-1'),
+            ...Settings.enumToSettingOptionArray(PokemonType, (t) => t !== 'None'),
         ],
     ),
     defendingType2: new FilterOption<number>(
