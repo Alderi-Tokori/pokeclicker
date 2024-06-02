@@ -287,7 +287,7 @@ export class Mine {
         }
     }
 
-    private static hammer(x: number, y: number) {
+    public static hammer(x: number, y: number) {
         if (App.game.underground.energy >= Underground.HAMMER_ENERGY) {
             if (x < 0 || y < 0) {
                 return;
@@ -309,7 +309,7 @@ export class Mine {
         }
     }
 
-    private static chisel(x: number, y: number) {
+    public static chisel(x: number, y: number) {
         if (Mine.grid[x][y]() > 0) {
             if (App.game.underground.energy >= Underground.CHISEL_ENERGY) {
                 this.breakTile(x, y, 2);
