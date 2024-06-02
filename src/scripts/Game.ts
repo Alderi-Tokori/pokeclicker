@@ -589,24 +589,6 @@ class Game {
             this.save();
         }
 
-        // Auto miner
-        if (App.game.underground.canAccess()) {
-            if (this.underground._energy() == 0) {
-                if (player._itemList.SmallRestore() > 0) {
-                    ItemList.SmallRestore.use(1);
-                } else if (player._itemList.MediumRestore() > 0) {
-                    ItemList.MediumRestore.use(1);
-                } else if (player._itemList.LargeRestore() > 0) {
-                    ItemList.LargeRestore.use(1);
-                }
-            }
-            if (this.underground._energy() >= Underground.CHISEL_ENERGY && !Mine.loadingNewLayer) {
-                if (Mine.bestI >= 0 && Mine.bestJ >= 0) {
-                    Mine.chisel(Mine.bestI, Mine.bestJ);
-                }
-            }
-        }
-
         // Underground
         Underground.counter += GameConstants.TICK_TIME;
         if (Underground.counter >= GameConstants.UNDERGROUND_TICK) {
@@ -618,6 +600,24 @@ class Game {
                 Underground.energyTick(this.underground.getEnergyRegenTime());
             }
             Underground.counter = 0;
+
+            // Auto miner
+            if (App.game.underground.canAccess()) {
+                if (this.underground._energy() == 0) {
+                    if (player._itemList.SmallRestore() > 0) {
+                        ItemList.SmallRestore.use(1);
+                    } else if (player._itemList.MediumRestore() > 0) {
+                        ItemList.MediumRestore.use(1);
+                    } else if (player._itemList.LargeRestore() > 0) {
+                        ItemList.LargeRestore.use(1);
+                    }
+                }
+                if (this.underground._energy() >= Underground.CHISEL_ENERGY && !Mine.loadingNewLayer) {
+                    if (Mine.bestI >= 0 && Mine.bestJ >= 0) {
+                        Mine.chisel(Mine.bestI, Mine.bestJ);
+                    }
+                }
+            }
         }
 
         // Farm
