@@ -63,24 +63,7 @@ export default class Item {
     }
 
     totalPrice(amount: number): number {
-        if (this.multiplier === 1) {
-            return Math.max(0, this.basePrice * amount);
-        }
-
-        // multiplier should be capped at 100, so work out how many to buy at increasing price and how many at max
-        //    (m_start) * (m^k) = 100
-        // => k = (2 - log(m_start)) / log(m)
-        const mStart = Math.max(player.itemMultipliers[this.saveName] || 1, 1);
-        const k = (mStart < 100)
-            ? Math.ceil((2 - Math.log10(mStart)) / Math.log10(this.multiplier))
-            : 0;
-        const incAmount = Math.min(k, amount);
-
-        const incCost = (this.price() * (1 - (this.multiplier ** incAmount))) / (1 - this.multiplier);
-        const maxCost = (this.basePrice * 100 * (amount - incAmount));
-        const total = incCost + maxCost;
-
-        return Math.max(0, Math.round(total));
+        return Math.max(0, this.basePrice * amount);
     }
 
     buy(amt: number) {
