@@ -22,13 +22,15 @@ export class Mine {
     public static itemsFound: Observable<number> = ko.observable(0);
     public static itemsPartiallyFound: Observable<number> = ko.observable(0);
     public static itemsBuried: Observable<number> = ko.observable(0);
+    public static bestI = -1;
+    public static bestJ = -1;
     public static rewardNumbers: Array<number>;
     public static surveyResult = ko.observable(null);
     public static skipsRemaining = ko.observable(Mine.maxSkips);
 
     // 0 represents the Mine.Tool.Chisel but it's not loaded here yet.
     public static toolSelected: Observable<Tool> = ko.observable(0);
-    private static loadingNewLayer = true;
+    public static loadingNewLayer = true;
     // Number of times to try and place an item in a new layer before giving up, just a failsafe
     private static maxPlacementAttempts = 1000;
     // Maximum underground layer depth
@@ -38,6 +40,8 @@ export class Mine {
         const tmpGrid = [];
         const tmpRewardGrid = [];
         Mine.rewardNumbers = [];
+        Mine.bestI = -1;
+        Mine.bestJ = -1;
         Mine.itemsBuried(0);
         Mine.surveyResult(null);
         for (let i = 0; i < App.game.underground.getSizeY(); i++) {
@@ -105,6 +109,8 @@ export class Mine {
                 this.breakTile(x, y, 1);
             }
         }
+
+        Mine.indicateOptimalSpotToBreak();
     }
 
     private static getRandomCoord(max: number, size: number): number {
@@ -210,6 +216,8 @@ export class Mine {
         App.game.underground.energy -= surveyCost;
         const rewards = Mine.rewardSummary();
         Mine.updatesurveyResult(rewards, resultTooltipID);
+
+        Mine.indicateOptimalSpotToBreak();
     }
 
     private static rewardSummary() {
@@ -296,6 +304,8 @@ export class Mine {
             if (hasMined) {
                 App.game.underground.energy -= Underground.HAMMER_ENERGY;
             }
+
+            Mine.indicateOptimalSpotToBreak();
         }
     }
 
@@ -304,6 +314,8 @@ export class Mine {
             if (App.game.underground.energy >= Underground.CHISEL_ENERGY) {
                 this.breakTile(x, y, 2);
                 App.game.underground.energy -= Underground.CHISEL_ENERGY;
+
+                Mine.indicateOptimalSpotToBreak();
             }
         }
     }
@@ -322,6 +334,8 @@ export class Mine {
                 this.breakTile(x, y, 2);
             }
             App.game.underground.energy -= Underground.BOMB_ENERGY;
+
+            Mine.indicateOptimalSpotToBreak();
         }
     }
 
@@ -488,6 +502,8 @@ export class Mine {
         // Check if completed in case the mine was saved after completion and before creating a new mine
         // TODO: Remove setTimeout after TypeScript module migration is complete. Needed so that `App.game` is available
         setTimeout(() => Mine.checkCompleted(), 0);
+
+        Mine.indicateOptimalSpotToBreak();
     }
 
     public static save(): Record<string, any> {
@@ -504,6 +520,123 @@ export class Mine {
             skipsRemaining: this.skipsRemaining(),
         };
         return mineSave;
+    }
+
+    public static indicateOptimalSpotToBreak(debug = false) {
+        let gridScores = new Array(Mine.grid.length).fill(0).map(() => new Array(Mine.grid[0].length).fill(0));
+
+        let revealedItems = [];
+        for (let y = 0; y < Mine.rewardGrid.length; ++y) {
+            for (let x = 0; x < Mine.rewardGrid[y].length; ++x) {
+                if (Mine.rewardGrid[y][x] != 0 && Mine.rewardGrid[y][x].revealed == 1 && !revealedItems.includes(Mine.rewardGrid[y][x].value)) {
+                    revealedItems.push(Mine.rewardGrid[y][x].value);
+                }
+            }
+        }
+
+        $(`#mineBody div`).removeClass('spot-to-break');
+        $(`#mineBody div`).removeClass('item-found');
+
+        let bestI = -1;
+        let bestJ = -1;
+        let bestScore = 0;
+        let bestDistanceToCenter = 0;
+        let centerI = (gridScores.length - 1) / 2;
+        let centerJ = (gridScores[0].length - 1) / 2;
+
+        for (let y = 0; y < Mine.rewardGrid.length; ++y) {
+            for (let x = 0; x < Mine.rewardGrid[y].length; ++x) {
+                if (Mine.rewardGrid[y][x] != 0 && revealedItems.includes(Mine.rewardGrid[y][x].value)) {
+                    $(`div[data-i=${y}][data-j=${x}]`).addClass('item-found');
+
+                    if (Mine.rewardGrid[y][x].revealed != 1 && bestI < 0) {
+                        bestI = y;
+                        bestJ = x;
+                    }
+                }
+            }
+        }
+
+        if (revealedItems.length < Mine.itemsBuried()) {
+            let gridKnownPlaces = new Array(Mine.grid.length).fill(0).map(() => new Array(Mine.grid[0].length).fill(0));
+            for (let y = 0; y < Mine.rewardGrid.length; ++y) {
+                for (let x = 0; x < Mine.rewardGrid[y].length; ++x) {
+                    if (Mine.grid[y][x]() == 0 || (Mine.rewardGrid[y][x] != 0 && revealedItems.includes(Mine.rewardGrid[y][x].value))) {
+                        gridKnownPlaces[y][x] = 1;
+                    }
+                }
+            }
+
+            UndergroundItems.list.forEach(item => {
+                let space = item.space;
+
+                for (let rotation = 0; rotation < 4; ++rotation) {
+                    let newSpace = new Array(space[0].length).fill(0).map(() => new Array(space.length).fill(0));
+
+                    for (let i = 0; i < space.length; i++) {
+                        for (let j = 0; j < space[0].length; j++) {
+                            newSpace[j][space.length - 1 - i] = space[i][j];
+                        }
+                    }
+
+                    space = newSpace;
+
+                    for (let y = 0; y < gridKnownPlaces.length - (space.length - 1); ++y) {
+                        checkItemPosition: for (let x = 0; x < gridKnownPlaces[y].length - (space[0].length - 1); ++x) {
+                            for (let i = 0; i < space.length; i++) {
+                                for (let j = 0; j < space[i].length; j++) {
+                                    if (space[i][j].value !== 0) {
+                                        if (gridKnownPlaces[i + y][j + x] !== 0) {
+                                            continue checkItemPosition;
+                                        }
+                                    }
+                                }
+                            }
+
+                            for (let i = 0; i < space.length; i++) {
+                                for (let j = 0; j < space[i].length; j++) {
+                                    if (space[i][j].value !== 0) {
+                                        gridScores[i + y][j + x] += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (debug) console.log(gridScores);
+
+            for (let i = 0; i < gridScores.length; ++i) {
+                for (let j = 0; j < gridScores[i].length; ++j) {
+                    let score = gridScores[i][j];
+                    let mineSquareLevel = Mine.grid[i][j]();
+
+                    if (score > 0 && mineSquareLevel > 0) {
+                        let scoreEnergyScaled = score / Math.ceil(mineSquareLevel / 2);
+                        let distanceToCenter = Math.sqrt((i - centerI) * (i - centerI) + (j - centerJ) * (j - centerJ));
+
+                        if (debug) console.log({i, j, score, mineSquareLevel, scoreEnergyScaled, distanceToCenter});
+
+                        if (scoreEnergyScaled > bestScore || (scoreEnergyScaled == bestScore && distanceToCenter < bestDistanceToCenter)) {
+                            bestI = i;
+                            bestJ = j;
+                            bestScore = scoreEnergyScaled;
+                            bestDistanceToCenter = distanceToCenter;
+                        }
+                    }
+                }
+            }
+
+            $(`div[data-i=${bestI}][data-j=${bestJ}]`).addClass('spot-to-break');
+
+            if (debug) console.log({bestI, bestJ, bestScore, bestDistanceToCenter});
+        }
+
+        Mine.bestI = bestI;
+        Mine.bestJ = bestJ;
+
+        return {bestI, bestJ, bestScore, bestDistanceToCenter};
     }
 }
 

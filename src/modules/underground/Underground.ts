@@ -24,7 +24,7 @@ export class Underground implements Feature {
 
     upgradeList: Array<Upgrade>;
     defaults: Record<string, any>;
-    private _energy: Observable<number> = ko.observable(Underground.BASE_ENERGY_MAX);
+    public _energy: Observable<number> = ko.observable(Underground.BASE_ENERGY_MAX);
 
     public static itemSelected;
     public static energyTick: Observable<number> = ko.observable(60);
