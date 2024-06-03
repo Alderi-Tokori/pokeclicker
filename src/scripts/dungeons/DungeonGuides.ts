@@ -187,15 +187,108 @@ class DungeonGuides {
 // Note: Trainer sprite is (seeded) randomly generated, or can be set manually, please make sure it kind of matches the name
 DungeonGuides.add(new DungeonGuide('Jimmy', 'Doesn\'t really know their way around a dungeon, but gives it their best try!',
     [[4, GameConstants.Currency.money]], [],
-    2000,
+    0.1,
     () => {
-        // Get current position
-        const pos = DungeonRunner.map.playerPosition();
-        const nearbyTiles = DungeonRunner.map.nearbyTiles(pos);
+        // Auto dungeoneer
+        const curFloor = DungeonRunner.map.playerPosition().floor;
 
-        // We just want to move weighted randomly
-        const randomTile = DungeonGuides.getRandomWeightedNearbyTile(nearbyTiles);
-        DungeonRunner.map.moveToTile(randomTile.position);
+        const enemyTiles = [];
+        const chestTiles = [];
+        const bossTiles = [];
+        const ladderTiles = [];
+        const visitedTiles = [];
+        const invisibleTiles = [];
+        const unaccessibleTiles = [];
+        for (let i = 0; i < DungeonRunner.map.board()[curFloor].length; i++) {
+            for (let j = 0; j < DungeonRunner.map.board()[curFloor][i].length; j++) {
+                const curCoords = new Point(j, i, curFloor);
+
+                if (DungeonRunner.map.board()[curFloor][i][j].isVisible) {
+                    const curCoordsType = DungeonRunner.map.board()[curFloor][i][j].type();
+
+                    if (curCoordsType === GameConstants.DungeonTileType.chest) {
+                        chestTiles.push(curCoords);
+                    } else if (curCoordsType === GameConstants.DungeonTileType.boss) {
+                        bossTiles.push(curCoords);
+                    } else if (curCoordsType === GameConstants.DungeonTileType.enemy) {
+                        enemyTiles.push(curCoords);
+                    } else if (curCoordsType === GameConstants.DungeonTileType.ladder) {
+                        ladderTiles.push(curCoords);
+                    }
+
+                    if (DungeonRunner.map.board()[curFloor][i][j].isVisited) {
+                        visitedTiles.push(curCoords);
+                    }
+                } else {
+                    invisibleTiles.push(curCoords);
+                }
+
+                if (!(DungeonRunner.map.hasAccessToTile(curCoords))) {
+                    unaccessibleTiles.push(curCoords);
+                }
+            }
+        }
+
+        if (!DungeonRunner.dungeon.mustFarmMinions()) {
+            // On va vers le boss ou l'échelle si on les voit
+            // Sinon, on va chercher un coffre si on en voit pour dévoiler la carte
+            // Sinon, on explore le donjon
+            if (bossTiles.length > 0 || ladderTiles.length > 0) {
+                if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss) {
+                    DungeonRunner.startBossFight();
+                } else if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
+                    DungeonRunner.nextFloor();
+                } else {
+                    const electedCoordinates = electOptimalCoordsTowardTiles([...bossTiles, ...ladderTiles], visitedTiles);
+
+                    DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                }
+            } else if ((chestTiles.length + DungeonRunner.chestsOpenedPerFloor[curFloor]) >= Math.floor(DungeonRunner.map.floorSizes[curFloor] / 3)) {
+                if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.chest) {
+                    DungeonRunner.openChest();
+                } else {
+                    const electedCoordinates = electOptimalCoordsTowardTiles(chestTiles, visitedTiles);
+
+                    DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                }
+            } else {
+                const electedCoordinates = electOptimalCoordinatesToExplore();
+
+                DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+            }
+        } else {
+            // On explore le donjon tant qu'il y a des tiles non découvertes
+            // Puis on va affronter tous les ennemis
+            // Puis on va ouvrir les coffres
+            // Puis on va affronter le boss ou on va à l'échelle
+            if (invisibleTiles.length > 0) {
+                const electedCoordinates = electOptimalCoordinatesToExplore();
+
+                DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+            } else if (enemyTiles.length > 0) {
+                const electedCoordinates = electOptimalCoordsTowardTiles(enemyTiles, visitedTiles);
+
+                DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+            } else if (chestTiles.length > 0) {
+                if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.chest) {
+                    DungeonRunner.openChest();
+                } else {
+                    const electedCoordinates = electOptimalCoordsTowardTiles(chestTiles, visitedTiles);
+
+                    DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                }
+            } else {
+                if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss) {
+                    DungeonRunner.startBossFight();
+                } else if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
+                    DungeonRunner.nextFloor();
+                } else {
+                    const electedCoordinates = electOptimalCoordsTowardTiles([...bossTiles, ...ladderTiles], visitedTiles);
+
+                    DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                }
+            }
+        }
     }));
 
 
