@@ -12,6 +12,7 @@ class DungeonGuide {
         public fixedCost: Array<Amount>,
         public interval: number, // how often they take a step in ms
         public walk: () => void,
+        public interact: () => void,
         public unlockRequirement?: Requirement | MultiRequirement | OneFromManyRequirement,
         trainerSprite?: number
     ) {
@@ -31,18 +32,7 @@ class DungeonGuide {
             this.ticks = 0;
             try {
                 this.walk();
-
-                // Interact with the current tile
-                switch (DungeonRunner.map.currentTile().type()) {
-                    case GameConstants.DungeonTileType.chest:
-                    case GameConstants.DungeonTileType.boss:
-                        DungeonRunner.handleInteraction();
-                        break;
-                    case GameConstants.DungeonTileType.ladder:
-                        DungeonRunner.handleInteraction();
-                        DungeonRunner.map.playerMoved(true);
-                        break;
-                }
+                this.interact();
             } catch (e) {
                 console.error('Dungeon Guide failed to walk correctly:\n', e);
             }
@@ -235,10 +225,8 @@ DungeonGuides.add(new DungeonGuide('Jimmy', 'Doesn\'t really know their way arou
                 // Sinon, on va chercher un coffre si on en voit pour dévoiler la carte
                 // Sinon, on explore le donjon
                 if (bossTiles.length > 0 || ladderTiles.length > 0) {
-                    if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss) {
-                        DungeonRunner.startBossFight();
-                    } else if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
-                        DungeonRunner.nextFloor();
+                    if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss || DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
+                        DungeonRunner.handleInteraction();
                     } else {
                         const electedCoordinates = electOptimalCoordsTowardTiles([...bossTiles, ...ladderTiles], visitedTiles);
 
@@ -246,7 +234,7 @@ DungeonGuides.add(new DungeonGuide('Jimmy', 'Doesn\'t really know their way arou
                     }
                 } else if ((chestTiles.length + DungeonRunner.chestsOpenedPerFloor[curFloor]) >= Math.floor(DungeonRunner.map.floorSizes[curFloor] / 3)) {
                     if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.chest) {
-                        DungeonRunner.openChest();
+                        DungeonRunner.handleInteraction();
                     } else {
                         const electedCoordinates = electOptimalCoordsTowardTiles(chestTiles, visitedTiles);
 
@@ -272,17 +260,15 @@ DungeonGuides.add(new DungeonGuide('Jimmy', 'Doesn\'t really know their way arou
                     DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
                 } else if (chestTiles.length > 0) {
                     if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.chest) {
-                        DungeonRunner.openChest();
+                        DungeonRunner.handleInteraction();
                     } else {
                         const electedCoordinates = electOptimalCoordsTowardTiles(chestTiles, visitedTiles);
 
                         DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
                     }
                 } else {
-                    if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss) {
-                        DungeonRunner.startBossFight();
-                    } else if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
-                        DungeonRunner.nextFloor();
+                    if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss || DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
+                        DungeonRunner.handleInteraction();
                     } else {
                         const electedCoordinates = electOptimalCoordsTowardTiles([...bossTiles, ...ladderTiles], visitedTiles);
 
@@ -291,7 +277,11 @@ DungeonGuides.add(new DungeonGuide('Jimmy', 'Doesn\'t really know their way arou
                 }
             }
         }
-    }));
+    },
+    () => {
+        return;
+    }
+));
 
 
 DungeonGuides.add(new DungeonGuide('Timmy', 'Can smell when there is treasure chest on a tile near them!',
@@ -318,6 +308,19 @@ DungeonGuides.add(new DungeonGuide('Timmy', 'Can smell when there is treasure ch
         // We didn't find what we were looking for, We just want to move weighted randomly
         const randomTile = DungeonGuides.getRandomWeightedNearbyTile(nearbyTiles);
         DungeonRunner.map.moveToTile(randomTile.position);
+    },
+    () => {
+        // Interact with the current tile
+        switch (DungeonRunner.map.currentTile().type()) {
+            case GameConstants.DungeonTileType.chest:
+            case GameConstants.DungeonTileType.boss:
+                DungeonRunner.handleInteraction();
+                break;
+            case GameConstants.DungeonTileType.ladder:
+                DungeonRunner.handleInteraction();
+                DungeonRunner.map.playerMoved(true);
+                break;
+        }
     }, new MaxRegionRequirement(GameConstants.Region.johto)));
 
 DungeonGuides.add(new DungeonGuide('Shelly', 'Prefers to explore the unknown!',
@@ -344,6 +347,19 @@ DungeonGuides.add(new DungeonGuide('Shelly', 'Prefers to explore the unknown!',
         // We didn't find what we were looking for, We just want to move weighted randomly
         const randomTile = DungeonGuides.getRandomWeightedNearbyTile(nearbyTiles);
         DungeonRunner.map.moveToTile(randomTile.position);
+    },
+    () => {
+        // Interact with the current tile
+        switch (DungeonRunner.map.currentTile().type()) {
+            case GameConstants.DungeonTileType.chest:
+            case GameConstants.DungeonTileType.boss:
+                DungeonRunner.handleInteraction();
+                break;
+            case GameConstants.DungeonTileType.ladder:
+                DungeonRunner.handleInteraction();
+                DungeonRunner.map.playerMoved(true);
+                break;
+        }
     }, new MaxRegionRequirement(GameConstants.Region.hoenn)));
 
 DungeonGuides.add(new DungeonGuide('Angeline', 'Can find treasure anywhere, loves to explore new areas!',
@@ -383,6 +399,19 @@ DungeonGuides.add(new DungeonGuide('Angeline', 'Can find treasure anywhere, love
         // We didn't find what we were looking for, We just want to move weighted randomly
         const randomTile = DungeonGuides.getRandomWeightedNearbyTile(nearbyTiles);
         DungeonRunner.map.moveToTile(randomTile.position);
+    },
+    () => {
+        // Interact with the current tile
+        switch (DungeonRunner.map.currentTile().type()) {
+            case GameConstants.DungeonTileType.chest:
+            case GameConstants.DungeonTileType.boss:
+                DungeonRunner.handleInteraction();
+                break;
+            case GameConstants.DungeonTileType.ladder:
+                DungeonRunner.handleInteraction();
+                DungeonRunner.map.playerMoved(true);
+                break;
+        }
     }, new MaxRegionRequirement(GameConstants.Region.kalos)));
 
 DungeonGuides.add(new DungeonGuide('Georgia', 'Knows the path to the boss, avoids random encounters when possible.',
@@ -412,6 +441,19 @@ DungeonGuides.add(new DungeonGuide('Georgia', 'Knows the path to the boss, avoid
         // We didn't find what we were looking for, We just want to move weighted randomly
         const randomTile = DungeonGuides.getRandomWeightedNearbyTile(nearbyTiles);
         DungeonRunner.map.moveToTile(randomTile.position);
+    },
+    () => {
+        // Interact with the current tile
+        switch (DungeonRunner.map.currentTile().type()) {
+            case GameConstants.DungeonTileType.chest:
+            case GameConstants.DungeonTileType.boss:
+                DungeonRunner.handleInteraction();
+                break;
+            case GameConstants.DungeonTileType.ladder:
+                DungeonRunner.handleInteraction();
+                DungeonRunner.map.playerMoved(true);
+                break;
+        }
     }, new MaxRegionRequirement(GameConstants.Region.alola)));
 
 DungeonGuides.add(new DungeonGuide('Drake', 'Knows the shortest path to the boss!',
@@ -436,4 +478,17 @@ DungeonGuides.add(new DungeonGuide('Drake', 'Knows the shortest path to the boss
         // We didn't find what we were looking for, We just want to move weighted randomly
         const randomTile = DungeonGuides.getRandomWeightedNearbyTile(nearbyTiles);
         DungeonRunner.map.moveToTile(randomTile.position);
+    },
+    () => {
+        // Interact with the current tile
+        switch (DungeonRunner.map.currentTile().type()) {
+            case GameConstants.DungeonTileType.chest:
+            case GameConstants.DungeonTileType.boss:
+                DungeonRunner.handleInteraction();
+                break;
+            case GameConstants.DungeonTileType.ladder:
+                DungeonRunner.handleInteraction();
+                DungeonRunner.map.playerMoved(true);
+                break;
+        }
     }, new MaxRegionRequirement(GameConstants.Region.galar)));
