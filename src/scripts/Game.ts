@@ -499,6 +499,15 @@ class Game {
                 }
             }
 
+            Underground.energyTick(Math.max(0, Underground.energyTick() - 1));
+            if (Underground.energyTick() == 0) {
+                // Check completed in case mine is locked out
+                Mine.checkCompleted();
+                this.underground.gainEnergy();
+                Underground.energyTick(this.underground.getEnergyRegenTime());
+            }
+            Underground.counter = 0;
+
             // Auto restore consumer
             if (App.game.underground.canAccess()) {
                 if (this.underground._energy() == 0) {
@@ -511,15 +520,6 @@ class Game {
                     }
                 }
             }
-
-            Underground.energyTick(Math.max(0, Underground.energyTick() - 1));
-            if (Underground.energyTick() == 0) {
-                // Check completed in case mine is locked out
-                Mine.checkCompleted();
-                this.underground.gainEnergy();
-                Underground.energyTick(this.underground.getEnergyRegenTime());
-            }
-            Underground.counter = 0;
         }
 
         // Farm
