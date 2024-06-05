@@ -490,16 +490,16 @@ class Game {
         // Underground
         Underground.counter += GameConstants.TICK_TIME;
         if (Underground.counter >= GameConstants.UNDERGROUND_TICK) {
-            Underground.energyTick(Math.max(0, Underground.energyTick() - 1));
-            if (Underground.energyTick() == 0) {
-                // Check completed in case mine is locked out
-                Mine.checkCompleted();
-                this.underground.gainEnergy();
-                Underground.energyTick(this.underground.getEnergyRegenTime());
+            if (App.game.underground.canAccess()) {
+                // Auto miner
+                if (this.underground._energy() >= Underground.CHISEL_ENERGY && !Mine.loadingNewLayer) {
+                    if (Mine.bestI >= 0 && Mine.bestJ >= 0) {
+                        Mine.chisel(Mine.bestI, Mine.bestJ);
+                    }
+                }
             }
-            Underground.counter = 0;
 
-            // Auto miner
+            // Auto restore consumer
             if (App.game.underground.canAccess()) {
                 if (this.underground._energy() == 0) {
                     if (player._itemList.SmallRestore() > 0) {
@@ -510,12 +510,16 @@ class Game {
                         ItemList.LargeRestore.use(1);
                     }
                 }
-                if (this.underground._energy() >= Underground.CHISEL_ENERGY && !Mine.loadingNewLayer) {
-                    if (Mine.bestI >= 0 && Mine.bestJ >= 0) {
-                        Mine.chisel(Mine.bestI, Mine.bestJ);
-                    }
-                }
             }
+
+            Underground.energyTick(Math.max(0, Underground.energyTick() - 1));
+            if (Underground.energyTick() == 0) {
+                // Check completed in case mine is locked out
+                Mine.checkCompleted();
+                this.underground.gainEnergy();
+                Underground.energyTick(this.underground.getEnergyRegenTime());
+            }
+            Underground.counter = 0;
         }
 
         // Farm
