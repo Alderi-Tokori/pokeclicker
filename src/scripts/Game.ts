@@ -490,11 +490,15 @@ class Game {
         // Underground
         Underground.counter += GameConstants.TICK_TIME;
         if (Underground.counter >= GameConstants.UNDERGROUND_TICK) {
-            if (App.game.underground.canAccess()) {
+            if (App.game.underground.canAccess() && !Mine.loadingNewLayer) {
                 // Auto miner
-                if (this.underground._energy() >= Underground.CHISEL_ENERGY && !Mine.loadingNewLayer) {
+                if (this.underground._energy() >= Underground.CHISEL_ENERGY && Mine.bestToolToUse === Mine.Tool.Chisel) {
                     if (Mine.bestI >= 0 && Mine.bestJ >= 0) {
                         Mine.chisel(Mine.bestI, Mine.bestJ);
+                    }
+                } else if (this.underground._energy() >= Underground.HAMMER_ENERGY && Mine.bestToolToUse === Mine.Tool.Hammer) {
+                    if (Mine.bestI >= 0 && Mine.bestJ >= 0) {
+                        Mine.hammer(Mine.bestI, Mine.bestJ);
                     }
                 }
             }
@@ -510,7 +514,7 @@ class Game {
 
             // Auto restore consumer
             if (App.game.underground.canAccess()) {
-                if (this.underground._energy() == 0) {
+                if (this.underground._energy() < Underground.HAMMER_ENERGY) {
                     if (player._itemList.SmallRestore() > 0) {
                         ItemList.SmallRestore.use(1);
                     } else if (player._itemList.MediumRestore() > 0) {

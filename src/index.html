@@ -95,24 +95,6 @@
             width:300%;
             height:300%;
         }
-
-        .item-found::after {
-            content: " ";
-            z-index: 10;
-            display: block;
-            position: absolute;
-            height: 100%;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 255, 0, .2);
-        }
-
-        .item-found.HammerSelected::after {
-            width:300%;
-            height:300%;
-            background: rgba(0, 255, 0, 0);
-        }
     </style>
 </head>
 <body class="no-select" data-bind="class: 'no-select ' + Settings.getSetting('theme').observableValue() + ' ' + Settings.getSetting('backgroundImage').observableValue(), attr : {'oncontextmenu' : 'return !' + Settings.getSetting('disableRightClickMenu').observableValue().toString() + ';'}">
