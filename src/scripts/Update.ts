@@ -2619,7 +2619,7 @@ class Update implements Saveable {
             });
         },
 
-        '0.10.20': ({ playerData, saveData, settingsData }) => {
+        '0.10.48': ({ playerData, saveData, settingsData }) => {
             // Add Olivine Lighthouse dungeon
             saveData.statistics.dungeonsCleared = Update.moveIndex(saveData.statistics.dungeonsCleared, 29);
 
