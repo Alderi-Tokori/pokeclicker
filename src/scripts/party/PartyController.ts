@@ -355,7 +355,7 @@ class PartyController {
             }
 
             // Apply attack multiplier against defending type if needed
-            if (defendingType1 != PokemonType.None && [SortOptions.attack, SortOptions.breedingEfficiency].includes(option)) {
+            if (defendingType1 != PokemonType.None && [SortOptions.attack, SortOptions.breedingEfficiency, SortOptions.attackBonus].includes(option)) {
                 const dataPokemonA = PokemonHelper.getPokemonByName(a.name);
                 const dataPokemonB = PokemonHelper.getPokemonByName(b.name);
 
