@@ -395,19 +395,19 @@ Settings.add(new Setting<string>('pokedexUniqueTransformationFilter', 'Unique Tr
 Settings.add(new BooleanSetting('pokedexHeldItemFilter', 'Rare Held Item', false, undefined, false));
 Settings.add(new BooleanSetting('pokedexHideAltFilter', 'Hide alternate forms', false, undefined, false));
 
-Settings.add(new Setting<PokemonType | null>('breedingDefendingTypeFilter1', 'Defending Type 1',
+Settings.add(new Setting<PokemonType>('breedingDefendingTypeFilter1', 'Defending Type 1',
     [
         new SettingOption('None', PokemonType.None),
         ...Settings.enumToNumberSettingOptionArray(PokemonType).filter((opt) => opt.text !== 'None'),
     ],
-    null, undefined, false));
+    PokemonType.None, undefined, false));
 
-Settings.add(new Setting<PokemonType | null>('breedingDefendingTypeFilter2', 'Defending Type 2',
+Settings.add(new Setting<PokemonType>('breedingDefendingTypeFilter2', 'Defending Type 2',
     [
         new SettingOption('None', PokemonType.None),
         ...Settings.enumToNumberSettingOptionArray(PokemonType).filter((opt) => opt.text !== 'None'),
     ],
-    null, undefined, false));
+    PokemonType.None, undefined, false));
 
 // Achievement sorting
 const achievementSortSettings = Object.keys(AchievementSortOptionConfigs).map((opt) => (
