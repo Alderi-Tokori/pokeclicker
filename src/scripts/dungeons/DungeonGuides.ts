@@ -284,7 +284,7 @@ DungeonGuides.add(new DungeonGuide('Jimmy', 'Doesn\'t really know their way arou
 ));
 
 
-DungeonGuides.add(new DungeonGuide('Timmy', 'Can smell when there is treasure chest on a tile near them!',
+DungeonGuides.add(new DungeonGuide('Timmy', 'Can smell when there is a treasure chest on a tile near them!',
     [[4, GameConstants.Currency.money],[1, GameConstants.Currency.dungeonToken]], [],
     2000,
     () => {
@@ -314,11 +314,8 @@ DungeonGuides.add(new DungeonGuide('Timmy', 'Can smell when there is treasure ch
         switch (DungeonRunner.map.currentTile().type()) {
             case GameConstants.DungeonTileType.chest:
             case GameConstants.DungeonTileType.boss:
-                DungeonRunner.handleInteraction();
-                break;
             case GameConstants.DungeonTileType.ladder:
                 DungeonRunner.handleInteraction();
-                DungeonRunner.map.playerMoved(true);
                 break;
         }
     }, new MaxRegionRequirement(GameConstants.Region.johto)));
@@ -405,11 +402,8 @@ DungeonGuides.add(new DungeonGuide('Angeline', 'Can find treasure anywhere, love
         switch (DungeonRunner.map.currentTile().type()) {
             case GameConstants.DungeonTileType.chest:
             case GameConstants.DungeonTileType.boss:
-                DungeonRunner.handleInteraction();
-                break;
             case GameConstants.DungeonTileType.ladder:
                 DungeonRunner.handleInteraction();
-                DungeonRunner.map.playerMoved(true);
                 break;
         }
     }, new MaxRegionRequirement(GameConstants.Region.kalos)));
@@ -447,11 +441,8 @@ DungeonGuides.add(new DungeonGuide('Georgia', 'Knows the path to the boss, avoid
         switch (DungeonRunner.map.currentTile().type()) {
             case GameConstants.DungeonTileType.chest:
             case GameConstants.DungeonTileType.boss:
-                DungeonRunner.handleInteraction();
-                break;
             case GameConstants.DungeonTileType.ladder:
                 DungeonRunner.handleInteraction();
-                DungeonRunner.map.playerMoved(true);
                 break;
         }
     }, new MaxRegionRequirement(GameConstants.Region.alola)));
@@ -484,11 +475,8 @@ DungeonGuides.add(new DungeonGuide('Drake', 'Knows the shortest path to the boss
         switch (DungeonRunner.map.currentTile().type()) {
             case GameConstants.DungeonTileType.chest:
             case GameConstants.DungeonTileType.boss:
-                DungeonRunner.handleInteraction();
-                break;
             case GameConstants.DungeonTileType.ladder:
                 DungeonRunner.handleInteraction();
-                DungeonRunner.map.playerMoved(true);
                 break;
         }
     }, new MaxRegionRequirement(GameConstants.Region.galar)));
