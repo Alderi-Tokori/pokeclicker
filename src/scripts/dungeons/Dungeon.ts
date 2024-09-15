@@ -76,6 +76,7 @@ interface EncounterInfo {
     lock: boolean,
     lockMessage: string,
     pokemonName: PokemonNameType,
+    shadowCaught: boolean,
 }
 
 // Gain a gym badge after first completion of a dungeon
@@ -203,7 +204,10 @@ class Dungeon {
     }
 
     public mustFarmMinions(): boolean {
-        const minions = this.normalEncounterList.filter(e => (e.hasOwnProperty('uncaught') && (!e.hide) && e.uncaught));
+        const minions = this.normalEncounterList.filter(e => (
+            (e.hasOwnProperty('uncaught') && (!e.hide) && e.uncaught)
+            || (e.hasOwnProperty('shadow') && e.shadow && e.hasOwnProperty('shadowCaught') && (!e.hide) && !e.shadowCaught)
+        ));
         return minions.length > 0;
     }
 
