@@ -220,32 +220,10 @@ DungeonGuides.add(new DungeonGuide('Jimmy', 'Doesn\'t really know their way arou
                 }
             }
 
-            if (!DungeonRunner.dungeon.mustFarmMinions()) {
-                // On va vers le boss ou l'échelle si on les voit
-                // Sinon, on va chercher un coffre si on en voit pour dévoiler la carte
-                // Sinon, on explore le donjon
-                if (bossTiles.length > 0 || ladderTiles.length > 0) {
-                    if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss || DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
-                        DungeonRunner.handleInteraction();
-                    } else {
-                        const electedCoordinates = electOptimalCoordsTowardTiles([...bossTiles, ...ladderTiles], visitedTiles);
 
-                        DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
-                    }
-                } else if ((chestTiles.length + DungeonRunner.chestsOpenedPerFloor[curFloor]) >= Math.floor(DungeonRunner.map.floorSizes[curFloor] / 3)) {
-                    if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.chest) {
-                        DungeonRunner.handleInteraction();
-                    } else {
-                        const electedCoordinates = electOptimalCoordsTowardTiles(chestTiles, visitedTiles);
-
-                        DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
-                    }
-                } else {
-                    const electedCoordinates = electOptimalCoordinatesToExplore();
-
-                    DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
-                }
-            } else {
+            if (DungeonRunner.dungeon.mustFarmMinions()
+                || App.game.statistics.dungeonsCleared[GameConstants.getDungeonIndex(DungeonRunner.dungeon.name)]() >= 500
+            ) {
                 // On explore le donjon tant qu'il y a des tiles non découvertes
                 // Puis on va affronter tous les ennemis
                 // Puis on va ouvrir les coffres
@@ -274,6 +252,31 @@ DungeonGuides.add(new DungeonGuide('Jimmy', 'Doesn\'t really know their way arou
 
                         DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
                     }
+                }
+            } else {
+                // On va vers le boss ou l'échelle si on les voit
+                // Sinon, on va chercher un coffre si on en voit pour dévoiler la carte
+                // Sinon, on explore le donjon
+                if (bossTiles.length > 0 || ladderTiles.length > 0) {
+                    if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.boss || DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.ladder) {
+                        DungeonRunner.handleInteraction();
+                    } else {
+                        const electedCoordinates = electOptimalCoordsTowardTiles([...bossTiles, ...ladderTiles], visitedTiles);
+
+                        DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                    }
+                } else if ((chestTiles.length + DungeonRunner.chestsOpenedPerFloor[curFloor]) >= Math.floor(DungeonRunner.map.floorSizes[curFloor] / 3)) {
+                    if (DungeonRunner.map.currentTile().type() === GameConstants.DungeonTileType.chest) {
+                        DungeonRunner.handleInteraction();
+                    } else {
+                        const electedCoordinates = electOptimalCoordsTowardTiles(chestTiles, visitedTiles);
+
+                        DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
+                    }
+                } else {
+                    const electedCoordinates = electOptimalCoordinatesToExplore();
+
+                    DungeonRunner.map.moveToCoordinates(electedCoordinates.x, electedCoordinates.y);
                 }
             }
         }
