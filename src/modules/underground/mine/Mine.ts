@@ -6,6 +6,7 @@ import { UndergroundController } from '../UndergroundController';
 import UndergroundItems from '../UndergroundItems';
 import OakItemType from '../../enums/OakItemType';
 import GameHelper from '../../GameHelper';
+import {Underground} from "../Underground";
 
 export type Coordinate = {
     x: number;
@@ -162,6 +163,10 @@ export class Mine {
     private _itemsBuried: Observable<number> = ko.observable(0);
     private _itemsFound: Observable<number> = ko.observable(0);
     private _itemsPartiallyFound: Observable<number> = ko.observable(0);
+
+    public static bestI = -1;
+    public static bestJ = -1;
+    public static bestToolToUse = Mine.Tool.Chisel;
 
     private _completed: Observable<boolean> = ko.observable(false);
 
@@ -461,4 +466,186 @@ export class Mine {
 
         return mine;
     }
+
+
+    // public static indicateOptimalSpotToBreak() {
+    //     let gridScoresChisel = new Array(Mine.grid.length).fill(0).map(() => new Array(Mine.grid[0].length).fill(0));
+    //     let gridScoresHammer = new Array(Mine.grid.length).fill(0).map(() => new Array(Mine.grid[0].length).fill(0));
+    //
+    //     let revealedItems = [];
+    //     for (let y = 0; y < Mine.rewardGrid.length; ++y) {
+    //         for (let x = 0; x < Mine.rewardGrid[y].length; ++x) {
+    //             if (Mine.rewardGrid[y][x] != 0 && Mine.rewardGrid[y][x].revealed == 1 && !revealedItems.includes(Mine.rewardGrid[y][x].value)) {
+    //                 revealedItems.push(Mine.rewardGrid[y][x].value);
+    //             }
+    //         }
+    //     }
+    //
+    //     $('#mineBody div').removeClass('spot-to-break');
+    //
+    //     let bestI = -1;
+    //     let bestJ = -1;
+    //     let bestScore = 0;
+    //     let bestDistanceToCenter = 0;
+    //     let bestToolToUse = Mine.Tool.Chisel;
+    //     let centerI = (gridScoresChisel.length - 1) / 2;
+    //     let centerJ = (gridScoresChisel[0].length - 1) / 2;
+    //
+    //     if (revealedItems.length < Mine.itemsBuried()) {
+    //         // Memorizing places where we know an item is present
+    //         let gridKnownPlaces = new Array(Mine.grid.length).fill(0).map(() => new Array(Mine.grid[0].length).fill(0));
+    //         for (let y = 0; y < Mine.rewardGrid.length; ++y) {
+    //             for (let x = 0; x < Mine.rewardGrid[y].length; ++x) {
+    //                 if (Mine.grid[y][x]() == 0 || (Mine.rewardGrid[y][x] != 0 && revealedItems.includes(Mine.rewardGrid[y][x].value))) {
+    //                     gridKnownPlaces[y][x] = 1;
+    //                 }
+    //             }
+    //         }
+    //
+    //         // Looping through all items to find the best spot to break
+    //         UndergroundItems.list.forEach(item => {
+    //             let space = item.space;
+    //
+    //             for (let rotation = 0; rotation < 4; ++rotation) {
+    //                 const spaceLength = space.length;
+    //                 let newSpace = new Array(space[0].length).fill(0).map(() => new Array(spaceLength).fill(0));
+    //
+    //                 for (let i = 0; i < space.length; i++) {
+    //                     for (let j = 0; j < space[0].length; j++) {
+    //                         newSpace[j][space.length - 1 - i] = space[i][j];
+    //                     }
+    //                 }
+    //
+    //                 space = newSpace;
+    //
+    //                 for (let y = 0; y < gridKnownPlaces.length - (space.length - 1); ++y) {
+    //                     checkItemPosition: for (let x = 0; x < gridKnownPlaces[y].length - (space[0].length - 1); ++x) {
+    //                         // Check if item can be placed in this position
+    //                         for (let i = 0; i < space.length; i++) {
+    //                             for (let j = 0; j < space[i].length; j++) {
+    //                                 if (space[i][j].value !== 0) {
+    //                                     if (gridKnownPlaces[i + y][j + x] !== 0) {
+    //                                         continue checkItemPosition;
+    //                                     }
+    //                                 }
+    //                             }
+    //                         }
+    //
+    //                         // Add score to the chisel score grid
+    //                         for (let i = 0; i < space.length; i++) {
+    //                             for (let j = 0; j < space[i].length; j++) {
+    //                                 if (space[i][j].value !== 0) {
+    //                                     let mineSquareLevel = Mine.grid[i + y][j + x]();
+    //
+    //                                     gridScoresChisel[i + y][j + x] += (1 / Math.ceil(mineSquareLevel / 2)) / Underground.CHISEL_ENERGY;
+    //                                 }
+    //                             }
+    //                         }
+    //
+    //                         // Commented out because it's always worse than chisel in practice so we don't waste time calculating it
+    //                         // // Calculate hammer score grid for current item
+    //                         // let gridBestScoresHammerForItem = new Array(Mine.grid.length).fill(0).map(() => new Array(Mine.grid[0].length).fill(0));
+    //                         // for (let i = 0; i < space.length; i++) {
+    //                         //     for (let j = 0; j < space[i].length; j++) {
+    //                         //         if (space[i][j].value !== 0) {
+    //                         //             let mineSquareLevel = Mine.grid[i + y][j + x]();
+    //                         //             let curScore = (1 / mineSquareLevel) / Underground.HAMMER_ENERGY;
+    //                         //
+    //                         //             for (let k = -1; k < 2; k++) {
+    //                         //                 for (let l = -1; l < 2; l++) {
+    //                         //                     if (i + y + k > 0 && i + y + k < gridBestScoresHammerForItem.length - 1
+    //                         //                         && j + x + l > 0 && j + x + l < gridBestScoresHammerForItem[i + y + k].length - 1
+    //                         //                     ) {
+    //                         //                         if (curScore > gridBestScoresHammerForItem[i + y + k][j + x + l]) {
+    //                         //                             gridBestScoresHammerForItem[i + y + k][j + x + l] = curScore;
+    //                         //                         }
+    //                         //                     }
+    //                         //                 }
+    //                         //             }
+    //                         //         }
+    //                         //     }
+    //                         // }
+    //                         //
+    //                         // // Add current item score grid to hammer score grid
+    //                         // for (let i = 0; i < gridScoresHammer.length; i++) {
+    //                         //     for (let j = 0; j < gridScoresHammer[i].length; j++) {
+    //                         //         gridScoresHammer[i][j] += gridBestScoresHammerForItem[i][j];
+    //                         //     }
+    //                         // }
+    //                     }
+    //                 }
+    //             }
+    //         });
+    //     } else {
+    //         for (let y = 0; y < Mine.rewardGrid.length; ++y) {
+    //             for (let x = 0; x < Mine.rewardGrid[y].length; ++x) {
+    //                 if (Mine.rewardGrid[y][x] != 0) {
+    //                     let mineSquareLevel = Mine.grid[y][x]();
+    //
+    //                     // Add score to chisel score grid
+    //                     gridScoresChisel[y][x] += Math.min(mineSquareLevel, 2);
+    //
+    //                     // Add score to hammer score grid
+    //                     for (let i = -1; i < 2; i++) {
+    //                         for (let j = -1; j < 2; j++) {
+    //                             if (y + i > 0 && y + i < gridScoresHammer.length - 1 && x + j > 0 && x + j < gridScoresHammer[y + i].length - 1) {
+    //                                 gridScoresHammer[y + i][x + j] += Math.min(mineSquareLevel, 1) / Underground.HAMMER_ENERGY;
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    //
+    //     // Select best case to break with chisel
+    //     for (let i = 0; i < gridScoresChisel.length; ++i) {
+    //         for (let j = 0; j < gridScoresChisel[i].length; ++j) {
+    //             let score = gridScoresChisel[i][j];
+    //             let mineSquareLevel = Mine.grid[i][j]();
+    //
+    //             if (score > 0 && mineSquareLevel > 0) {
+    //                 // Used to discriminate between two equal scores
+    //                 let distanceToCenter = Math.sqrt((i - centerI) * (i - centerI) + (j - centerJ) * (j - centerJ));
+    //
+    //                 if (score > bestScore || (score == bestScore && distanceToCenter < bestDistanceToCenter)) {
+    //                     bestI = i;
+    //                     bestJ = j;
+    //                     bestToolToUse = Mine.Tool.Chisel;
+    //                     bestScore = score;
+    //                     bestDistanceToCenter = distanceToCenter;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //
+    //     // Select best case to break with hammer
+    //     for (let i = 0; i < gridScoresHammer.length; ++i) {
+    //         for (let j = 0; j < gridScoresHammer[i].length; ++j) {
+    //             let score = gridScoresHammer[i][j];
+    //
+    //             if (score > 0) {
+    //                 // Used to discriminate between two equal scores
+    //                 let distanceToCenter = Math.sqrt((i - centerI) * (i - centerI) + (j - centerJ) * (j - centerJ));
+    //
+    //                 if (score > bestScore || (score == bestScore && distanceToCenter < bestDistanceToCenter)) {
+    //                     bestI = i;
+    //                     bestJ = j;
+    //                     bestToolToUse = Mine.Tool.Hammer;
+    //                     bestScore = score;
+    //                     bestDistanceToCenter = distanceToCenter;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //
+    //     $(`div[data-i=${bestI}][data-j=${bestJ}]`).addClass('spot-to-break');
+    //
+    //     Mine.bestI = bestI;
+    //     Mine.bestJ = bestJ;
+    //     Mine.bestToolToUse = bestToolToUse;
+    //     Mine.toolSelected(bestToolToUse);
+    //
+    //     return { bestI, bestJ, bestToolToUse, bestScore, bestDistanceToCenter };
+    // }
 }
