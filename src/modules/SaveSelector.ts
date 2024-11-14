@@ -5,6 +5,7 @@ import Profile from './profile/Profile';
 import { SortSaves } from './Sortable';
 import Settings from './settings/index';
 import GameHelper from './GameHelper';
+import GameLoadState from './utilities/GameLoadState';
 
 export default class SaveSelector {
     static MAX_SAVES = 9;
@@ -62,6 +63,29 @@ export default class SaveSelector {
 
         // Sort our saves
         SortSaves();
+
+        $(document).on('keydown', this.LoadSaveOnKeydown);
+    }
+
+    static LoadSaveOnKeydown(e: JQuery.KeyDownEvent) {
+        if (GameHelper.focusedOnEditableElement()) {
+            return;
+        }
+
+        if (GameLoadState.getLoadState() !== GameLoadState.states.none) {
+            $(document).off(e);
+            return;
+        }
+
+        const key = parseInt(e.key);
+        if (!isNaN(key)) {
+            const chosenSave = key - 1;
+            const allSaves = $('.trainer-card');
+            if (allSaves.length > chosenSave && chosenSave >= 0) {
+                $(document).off(e);
+                allSaves[chosenSave].click();
+            }
+        }
     }
 
     static getTrainerCard(key: string): Element {
@@ -80,6 +104,7 @@ export default class SaveSelector {
                 saveData.profile?.trainer,
                 saveData.profile?.pokemon ?? saveData.party.caughtPokemon[0]?.id,
                 saveData.profile?.pokemonShiny ?? saveData.party.caughtPokemon[0]?.shiny,
+                saveData.profile?.pokemonShadow ?? false,
                 saveData.profile?.pokemonFemale ?? false,
                 saveData.profile?.background,
                 saveData.profile?.textColor,

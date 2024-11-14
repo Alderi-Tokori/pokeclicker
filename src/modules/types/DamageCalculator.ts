@@ -10,6 +10,7 @@ export default class DamageCalculator {
     public static type1 = ko.observable(PokemonType.None).extend({ numeric: 0 });
     public static type2 = ko.observable(PokemonType.None).extend({ numeric: 0 });
     public static region = ko.observable(Region.none);
+    public static subregion = ko.observable(-1);
     public static weather = ko.observable(WeatherType.Clear);
     public static includeBreeding = ko.observable(false);
     public static baseAttackOnly = ko.observable(false);
@@ -19,6 +20,13 @@ export default class DamageCalculator {
     public static observableTypeDamageArray = ko.pureComputed(DamageCalculator.getDamageByTypes);
     public static observableTypeDetails = ko.pureComputed(DamageCalculator.getTypeDetail);
     public static observableTotalDamage = ko.pureComputed(DamageCalculator.totalDamage);
+
+    public static initialize(): void {
+        DamageCalculator.region.subscribe((value) => {
+            const subregion = value == Region.none ? -1 : 0;
+            DamageCalculator.subregion(subregion);
+        });
+    }
 
     public static totalDamage(): number {
         const ignoreRegionMultiplier = DamageCalculator.region() == Region.none;
@@ -32,14 +40,17 @@ export default class DamageCalculator {
             DamageCalculator.baseAttackOnly(),
             DamageCalculator.weather(),
             DamageCalculator.ignoreLevel(),
+            true,
+            DamageCalculator.subregion(),
         );
     }
 
     public static getDamageByTypes(): number[] {
         const typedamage = new Array(GameHelper.enumLength(PokemonType) - 1).fill(0);
         const ignoreRegionMultiplier = DamageCalculator.region() == Region.none;
+        const activePokemon  = App.game.party.partyPokemonActiveInSubRegion(DamageCalculator.region(), DamageCalculator.subregion());
 
-        for (const pokemon of App.game.party.caughtPokemon) {
+        for (const pokemon of activePokemon) {
             const dataPokemon = getPokemonByName(pokemon.name);
             if (dataPokemon.type1 === PokemonType.None) {
                 continue;
@@ -80,7 +91,7 @@ export default class DamageCalculator {
         const dataPokemon = getPokemonByName(pokemon.name);
 
         let attack = App.game.party.calculateOnePokemonAttack(pokemon, PokemonType.None, PokemonType.None, DamageCalculator.region(), ignoreRegionMultiplier,
-            DamageCalculator.includeBreeding(), DamageCalculator.baseAttackOnly(), DamageCalculator.weather(), DamageCalculator.ignoreLevel());
+            DamageCalculator.includeBreeding(), DamageCalculator.baseAttackOnly(), DamageCalculator.weather(), DamageCalculator.ignoreLevel(), true, DamageCalculator.subregion());
         const type1Multiplier = TypeHelper.getAttackModifier(dataPokemon.type1, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2());
         const type2Multiplier = dataPokemon.type2 !== PokemonType.None
             ? TypeHelper.getAttackModifier(dataPokemon.type2, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2())
@@ -106,7 +117,7 @@ export default class DamageCalculator {
     }
 
     public static getTypeDetail(): TypeDetail[] {
-        return App.game.party.caughtPokemon.filter(pokemon => {
+        return App.game.party.partyPokemonActiveInSubRegion(DamageCalculator.region(), DamageCalculator.subregion()).filter(pokemon => {
             const dataPokemon = getPokemonByName(pokemon.name);
             const type1Multiplier = TypeHelper.getAttackModifier(dataPokemon.type1, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2());
             const type2Multiplier = dataPokemon.type2 !== PokemonType.None
@@ -130,3 +141,4 @@ export type TypeDetail = {
     damage: number,
     displayName: string,
 };
+
