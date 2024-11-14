@@ -6,7 +6,6 @@ import { UndergroundController } from '../UndergroundController';
 import UndergroundItems from '../UndergroundItems';
 import OakItemType from '../../enums/OakItemType';
 import GameHelper from '../../GameHelper';
-import {Underground} from "../Underground";
 
 export type Coordinate = {
     x: number;
