@@ -164,10 +164,6 @@ export class Mine {
     private _itemsFound: Observable<number> = ko.observable(0);
     private _itemsPartiallyFound: Observable<number> = ko.observable(0);
 
-    public static bestI = -1;
-    public static bestJ = -1;
-    public static bestToolToUse = Mine.Tool.Chisel;
-
     private _completed: Observable<boolean> = ko.observable(false);
 
     constructor(mineProperties: MineProperties) {
