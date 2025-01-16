@@ -243,7 +243,7 @@ export default class RedeemableCodes implements Saveable {
 
     // eslint-disable-next-line class-methods-use-this
     isDiscordCode(code: string): boolean {
-        return /^\w{4}-\w{4}-\w{4}$/.test(code);
+        return /^discord - .*$/.test(code);
     }
 
     enterCode(code: string): void {

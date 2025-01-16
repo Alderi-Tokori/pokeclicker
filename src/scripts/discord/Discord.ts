@@ -85,27 +85,10 @@ class Discord implements Saveable {
     }
 
     findCodeMatch(enteredCode: string): DiscordCode {
-        return this.codes.find(code => enteredCode.toUpperCase() == this.calcCode(code));
+        return this.codes.find(code => enteredCode.substring(10).toUpperCase() == code.name.toUpperCase());
     }
 
     enterCode(enteredCode: string): boolean {
-        // Discord integration disabled
-        if (!this.enabled) {
-            Notifier.notify({
-                message: 'Discord integration not enabled',
-                type: NotificationConstants.NotificationOption.danger,
-            });
-            return false;
-        }
-        // User not logged in to Discord
-        if (!this.ID()) {
-            Notifier.notify({
-                message: 'You must sign in to Discord before attempting to use this code',
-                type: NotificationConstants.NotificationOption.danger,
-            });
-            return false;
-        }
-
         // Try find a matching code
         const code = this.findCodeMatch(enteredCode);
 
