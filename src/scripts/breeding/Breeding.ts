@@ -219,10 +219,9 @@ class Breeding implements Feature {
         while (index-- > 0) {
             const helper = this.hatcheryHelpers.hired()[index];
             const egg = this.eggList[index]();
-            const partyPokemon = egg.partyPokemon();
 
-            if (!egg.isNone() && partyPokemon && partyPokemon.canCatchPokerus() && partyPokemon.pokerus == GameConstants.Pokerus.Uninfected) {
-                partyPokemon.calculatePokerus(index);
+            if (!egg.isNone() && egg.partyPokemon() && egg.partyPokemon().canCatchPokerus() && egg.partyPokemon().pokerus == GameConstants.Pokerus.Uninfected) {
+                egg.partyPokemon().calculatePokerus(index);
             }
 
             if (helper) {
