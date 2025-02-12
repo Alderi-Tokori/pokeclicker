@@ -156,14 +156,12 @@ class PartyPokemon implements Saveable {
         // Egg can't hatch and valid Egg has pokerus
         const eggTypes: Set<number> = new Set();
         for (let i = 0; i < App.game.breeding.eggList.length; i++) {
-            if (i > App.game.breeding.hatcheryHelpers.hired().length - 1) {
-                const egg = App.game.breeding.eggList[i]();
-                if (!egg.canHatch() && !egg.isNone()) {
-                    const pokerus = App.game.party.getPokemon(pokemonMap[egg.pokemon].id)?.pokerus;
-                    if (pokerus && pokerus >= GameConstants.Pokerus.Contagious) {
-                        eggTypes.add(PokemonHelper.getPokemonByName(pokemonMap[App.game.breeding.eggList[i]().pokemon].name).type1);
-                        eggTypes.add(PokemonHelper.getPokemonByName(pokemonMap[App.game.breeding.eggList[i]().pokemon].name).type2);
-                    }
+            const egg = App.game.breeding.eggList[i]();
+            if (!egg.canHatch() && !egg.isNone()) {
+                const pokerus = App.game.party.getPokemon(pokemonMap[egg.pokemon].id)?.pokerus;
+                if (pokerus && pokerus >= GameConstants.Pokerus.Contagious) {
+                    eggTypes.add(PokemonHelper.getPokemonByName(pokemonMap[App.game.breeding.eggList[i]().pokemon].name).type1);
+                    eggTypes.add(PokemonHelper.getPokemonByName(pokemonMap[App.game.breeding.eggList[i]().pokemon].name).type2);
                 }
             }
         }
