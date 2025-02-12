@@ -17,7 +17,7 @@ class Breeding implements Feature {
     private _eggList: Array<KnockoutObservable<Egg>>;
     private _eggSlots: KnockoutObservable<number>;
 
-    private _queueList: KnockoutObservableArray<number>;
+    public _queueList: KnockoutObservableArray<number>;
     public queueSlots: KnockoutObservable<number>;
 
     public hatchList: { [name: number]: PokemonNameType[][] } = {};
@@ -356,9 +356,9 @@ class Breeding implements Feature {
         }
     }
 
-    private nextEggFromQueue(): void {
+    public nextEggFromQueue(eggSlot = -1): void {
         const nextEgg = this.createEgg(this._queueList.shift());
-        this.gainEgg(nextEgg);
+        this.gainEgg(nextEgg, eggSlot);
         if (!this._queueList().length) {
             Notifier.notify({
                 message: 'Hatchery queue is empty.',

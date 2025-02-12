@@ -198,41 +198,46 @@ class HatcheryHelpers {
                     // Reset egg
                     this.hatchery.eggList[index](new Egg());
                     egg = this.hatchery.eggList[index]();
+
+                    // Increment our hatched counter
+                    GameHelper.incrementObservable(helper.hatched, 1);
                 }
             }
 
             // Check if egg slot empty
             if (egg.isNone()) {
-                // Check if there's a pokemon we can chuck into an egg
-                const regionalAttackDebuff = App.game.challenges.list.regionalAttackDebuff.active() ? Settings.getSetting('breedingRegionalAttackDebuffSetting').value : GameConstants.Region.none;
-                const compare = PartyController.compareBy(helper.sortOption(), helper.sortDirection(), regionalAttackDebuff,
-                    Settings.getSetting('breedingDefendingTypeFilter1').value,
-                    Settings.getSetting('breedingDefendingTypeFilter2').value
-                );
+                // If the queue isn't empty, we take the next pokémon from it
+                if (this.hatchery._queueList().length) {
+                    this.hatchery.nextEggFromQueue(index);
+                } else {
+                    // Check if there's a pokemon we can chuck into an egg
+                    const regionalAttackDebuff = App.game.challenges.list.regionalAttackDebuff.active() ? Settings.getSetting('breedingRegionalAttackDebuffSetting').value : GameConstants.Region.none;
+                    const compare = PartyController.compareBy(helper.sortOption(), helper.sortDirection(), regionalAttackDebuff,
+                        Settings.getSetting('breedingDefendingTypeFilter1').value,
+                        Settings.getSetting('breedingDefendingTypeFilter2').value
+                    );
 
-                const categories = helper.categories();
-                const useHatcheryFilters = helper.useHatcheryFilters();
-                const pokemon = App.game.party.caughtPokemon.reduce((best, pokemon) => {
-                    if (useHatcheryFilters && !pokemon.isHatchableFiltered()) {
-                        return best;
-                    }
-                    if (!pokemon.isHatchable()) {
-                        return best;
-                    }
-                    if (categories.length && !categories.some((cat) => pokemon.category.includes(cat))) {
-                        return best;
-                    }
-                    if (best === null) {
-                        return pokemon;
-                    }
-                    return compare(best, pokemon) <= 0 ? best : pokemon;
-                }, null);
+                    const categories = helper.categories();
+                    const useHatcheryFilters = helper.useHatcheryFilters();
+                    const pokemon = App.game.party.caughtPokemon.reduce((best, pokemon) => {
+                        if (useHatcheryFilters && !pokemon.isHatchableFiltered()) {
+                            return best;
+                        }
+                        if (!pokemon.isHatchable()) {
+                            return best;
+                        }
+                        if (categories.length && !categories.some((cat) => pokemon.category.includes(cat))) {
+                            return best;
+                        }
+                        if (best === null) {
+                            return pokemon;
+                        }
+                        return compare(best, pokemon) <= 0 ? best : pokemon;
+                    }, null);
 
-                if (pokemon) {
-                    this.hatchery.gainPokemonEgg(pokemon, index);
-
-                    // Increment our hatched counter
-                    GameHelper.incrementObservable(helper.hatched, 1);
+                    if (pokemon) {
+                        this.hatchery.gainPokemonEgg(pokemon, index);
+                    }
                 }
             }
         });
