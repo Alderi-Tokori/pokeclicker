@@ -409,7 +409,7 @@ class Breeding implements Feature {
         }
     }
 
-    private nextEggFromQueue(eggSlot = -1): void {
+    public nextEggFromQueue(eggSlot = -1): void {
         const nextInQueue = this._queueList.shift();
         let nextEgg;
         if (nextInQueue[0] === EggType.Pokemon) {

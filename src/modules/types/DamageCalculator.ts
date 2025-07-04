@@ -91,7 +91,7 @@ export default class DamageCalculator {
         const dataPokemon = getPokemonByName(pokemon.name);
 
         let attack = App.game.party.calculateOnePokemonAttack(pokemon, PokemonType.None, PokemonType.None, DamageCalculator.region(), ignoreRegionMultiplier,
-            DamageCalculator.includeBreeding(), DamageCalculator.baseAttackOnly(), DamageCalculator.weather(), DamageCalculator.ignoreLevel(), true, DamageCalculator.subregion());
+            DamageCalculator.includeBreeding(), DamageCalculator.baseAttackOnly(), DamageCalculator.weather(), DamageCalculator.ignoreLevel(), true);
         const type1Multiplier = TypeHelper.getAttackModifier(dataPokemon.type1, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2());
         const type2Multiplier = dataPokemon.type2 !== PokemonType.None
             ? TypeHelper.getAttackModifier(dataPokemon.type2, PokemonType.None, DamageCalculator.type1(), DamageCalculator.type2())

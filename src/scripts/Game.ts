@@ -46,7 +46,6 @@ class Game implements TmpGameType {
     public purifyChamber: PurifyChamber;
     public weatherApp: WeatherApp;
     public zMoves: ZMoves;
-    public pokemonContest: PokemonContest;
     public autoDungeoneerFarmMode: boolean;
     public autoStartDungeon: boolean;
 
