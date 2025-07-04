@@ -88,7 +88,6 @@ class Game implements TmpGameType {
         this.purifyChamber = new PurifyChamber();
         this.weatherApp = new WeatherApp();
         this.zMoves = new ZMoves();
-        this.pokemonContest = new PokemonContest();
 
         this.autoDungeoneerFarmMode = false;
         this.autoStartDungeon = false;
@@ -159,7 +158,6 @@ class Game implements TmpGameType {
         SafariPokemonList.generateSafariLists();
         RoamingPokemonList.generateIncreasedChanceRoutes(now);
         WeatherApp.initialize();
-        PokemonContestController.generateDailyContest(now);
         DamageCalculator.initialize();
 
         if (Settings.getSetting('disableOfflineProgress').value === false) {
@@ -480,6 +478,7 @@ class Game implements TmpGameType {
                 }
 
                 GameHelper.updateDay();
+                (App.game.farming.mutations.find(m => m instanceof EnigmaMutation) as EnigmaMutation).resetIndex();
 
                 SeededDateRand.seedWithDate(now);
                 // Give the player a free quest refresh
